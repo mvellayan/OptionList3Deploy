@@ -1,9 +1,14 @@
 # OptionList3 Deployment Installation
 
 ## 1. Choose Centos 7 VM (not Amazon Linux or thers)
-Using US-EAST-1: CentOS Linux 7 x86_64 HVM EBS ENA 1901_01-b7ee8a69-ee97-4a49-9e68-afaee216db2e-ami-05713873c6794f575.4 (ami-02eac2c0129f6376b)
+
+        Using US-EAST-1: 
+        CentOS Linux 7 x86_64 HVM EBS ENA 1901_01-b7ee8a69-ee97-4a49-9e68-afaee216db2e-ami-05713873c6794f575.4 
+        (ami-02eac2c0129f6376b)
+
+<aside class="warning">
 Centos8 -- Found problems with docker, java8 etc installation 
-    
+</aside>
 
 ## 2. Install docker 
 
