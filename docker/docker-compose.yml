@@ -1,0 +1,51 @@
+# Deploy the sample Web app. This should be run in the deploy env (obviously).
+# Before running this you must set the environment variables defined in deployfortestenv.sh
+
+version: '3'
+services:
+  # Ref: https://hub.docker.com/_/mysql
+  arbo-db:
+    build: ./db   
+    image: arbo-db:1.0
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/schema:/docker-entrypoint-initdb.d
+      - "db-data:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}      
+    networks:
+      - inner
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+        
+  # Arbo1 App
+  ib-generate:
+    build: ./ib-generate
+    image: ib-generate:1.0
+    depends_on:
+      - arbo-db
+    networks:
+      - inner
+      - outer
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+networks:
+  outer:
+    driver: bridge
+  inner:
+    driver: bridge
+    
+volumes:
+  db-data:
