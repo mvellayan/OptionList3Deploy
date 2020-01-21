@@ -15,16 +15,13 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
---
--- Table structure for table `mode_execution`
---
 
 USE model;
 
-DROP TABLE IF EXISTS `model.model_execution`;
+DROP TABLE IF EXISTS `model.model_run`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE model.model_execution (
+CREATE TABLE model.model_run (
   id INT(11) NOT NULL DEFAULT 0,
   run_id INT(11) NOT NULL,
   model_id INT(11) NOT NULL,
@@ -51,7 +48,7 @@ COLLATE latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
-DROP TABLE IF EXISTS `model.model_list`;
+DROP TABLE IF EXISTS `model.model`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE model.model_description (

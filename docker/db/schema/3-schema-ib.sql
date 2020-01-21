@@ -1,9 +1,3 @@
--- MySQL dump 10.13  Distrib 5.6.19, for Win64 (x86_64)
---
--- Host: localhost    Database: IB
--- ------------------------------------------------------
--- Server version	5.6.19
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -42,7 +36,6 @@ AVG_ROW_LENGTH = 3276
 CHARACTER SET latin1
 COLLATE latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
 
 
 DROP TABLE IF EXISTS `ib.option_list`;
@@ -172,8 +165,8 @@ COLLATE latin1_swedish_ci;
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-DROP TABLE IF EXISTS `ib.task_schedule`;
-CREATE TABLE ib.task_schedule (
+DROP TABLE IF EXISTS `ib.task_plan`;
+CREATE TABLE ib.task_plan (
   id INT(11) NOT NULL AUTO_INCREMENT,
   task VARCHAR(255) NOT NULL COMMENT '4 known tasks so far',  
   contract_id INT(11) NOT NULL COMMENT 'Required. stock/option security id',
@@ -182,7 +175,7 @@ CREATE TABLE ib.task_schedule (
   months_out INT(11) DEFAULT NULL,
   bracket_pct DECIMAL(7, 3) DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE INDEX UK_task_schedule (contract_id, task)
+  UNIQUE INDEX UK_task_plan (contract_id, task)
 )
 ENGINE = INNODB
 AUTO_INCREMENT = 13
@@ -226,94 +219,3 @@ ENGINE = INNODB
 CHARACTER SET latin1
 COLLATE latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
-
-
-
-/*!50003 DROP PROCEDURE IF EXISTS `update_set1` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_task_execution`(IN p_datestr VARCHAR(20))
-BEGIN
-   DECLARE l_count, l_assigned_status, l_contract_id bigint;
-   DECLARE l_schedule_date DATETIME;
-   DECLARE l_task varchar(20);
-
-   declare b1_no_more_rows boolean default false;
-   DECLARE b1_cursor CURSOR FOR 
-      select date(sq.quote_date), 'stock_quote', sq.contract_id, count(*) 
-      from stock_quote sq 
-      where date(sq.quote_date) between DATE_SUB(p_datestr, INTERVAL 120 day) AND p_datestr
-      group by date(sq.quote_date), sq.contract_id
-      union 
-      select date(sq.quote_date), 'option_quote', sq.contract_id, count(*) 
-      from stock_quote sq 
-      where date(sq.quote_date) between DATE_SUB(p_datestr, INTERVAL 120 day) AND p_datestr
-      group by date(sq.quote_date), sq.contract_id;
-   declare continue handler for not found set b1_no_more_rows := true;
-
--- Start processing block
-  delete from log;
-  open b1_cursor;
-  insert into log (msg) values ('opening cursor');
-    
-  STOCK_LOOP: loop
-     FETCH b1_cursor into l_schedule_date, l_task, l_contract_id, l_count;
- 
-     if b1_no_more_rows then
-          close b1_cursor;
-          leave STOCK_LOOP;
-     end if;
-
-    if (l_count between 0 and 100) THEN
-      set l_assigned_status = 101; -- Retry
-    end if;
-    if (l_count between 100 and 10000 ) THEN
-      set l_assigned_status = 200;  -- Success
-    end if;
-    insert into log (msg) values (concat('starting loop -  schedule_date:', l_schedule_date, ' count:', l_count, ' assigned-status:', l_assigned_status));
-    
-    if (l_task = 'stock_quote') then
-     update task_execution set 
-       status = l_assigned_status,
-       row_count = l_count
-    where contract_id = l_contract_id 
-      and schedule_date = l_schedule_date 
-      and task = 'stock_quote'
-      and status in (100,101);
-    end if;
-    if (l_task = 'option_quote') then
-     update task_execution set 
-       status = l_assigned_status,
-       row_count = l_count
-    where contract_id = l_contract_id 
-      and schedule_date = l_schedule_date 
-      and task = 'option_quote'
-      and status in (100,101);
-    end if;    
-  end loop STOCK_LOOP;
-
-END ;;
-DELIMITER ;
-
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
