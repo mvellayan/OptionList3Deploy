@@ -144,8 +144,8 @@ COLLATE latin1_swedish_ci;
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-DROP TABLE IF EXISTS `ib.task_execution`;
-CREATE TABLE ib.task_execution (
+DROP TABLE IF EXISTS `ib.task`;
+CREATE TABLE ib.task (
   id INT(11) NOT NULL AUTO_INCREMENT COMMENT 'Unique PK',
   contract_id INT(11) NOT NULL COMMENT 'Required. stock/option security id',
   task VARCHAR(255) NOT NULL COMMENT '4 known tasks so far',
@@ -161,7 +161,7 @@ CREATE TABLE ib.task_execution (
   retry_count INT(11) DEFAULT NULL COMMENT 'TWS is not 100% reliable and needs to be retried 3-5 times',
   error_message VARCHAR(255) DEFAULT NULL COMMENT 'Last error message when downloading from TWS',
   PRIMARY KEY (id),
-  UNIQUE INDEX UK_task_execution (schedule_date, contract_id, task)
+  UNIQUE INDEX UK_task (schedule_date, contract_id, task)
 )
 ENGINE = INNODB
 AUTO_INCREMENT = 30686

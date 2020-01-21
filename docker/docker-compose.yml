@@ -23,6 +23,34 @@ services:
         delay: 5s
         max_attempts: 3
         window: 120s
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    environment:
+      # - VIRTUAL_HOST=grafana.loc
+      # - GF_SERVER_ROOT_URL=http://grafana.loc
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=password
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=arbo-db:3306
+      - GF_DATABASE_MAX_OPEN_CONN=30
+      - GF_SESSION_PROVIDER=mysql
+      - GF_SESSION_PROVIDER_CONFIG=grafana:password@tcp(arbo-db:3306)/grafana?allowNativePasswords=true
+      # - GF_SERVER_ROUTER_LOGGING=true
+      # - GF_LOG_CONSOLE_FORMAT=json
+      # - GF_LOG_FILTERS=alerting.notifier:debug,alerting.notifier.slack:debug,auth:debug
+      # - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,vonage-status-panel,flant-statusmap-panel,snuids-radar-panel,neocat-cal-heatmap-panel,briangann-gauge-panel
+    networks:
+      - inner
+    ports:
+      - 3000
         
   # Arbo1 App
   ib-generate:
@@ -49,3 +77,4 @@ networks:
     
 volumes:
   db-data:
+  grafana-storage:
