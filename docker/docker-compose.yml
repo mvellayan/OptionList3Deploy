@@ -1,28 +1,18 @@
-# Deploy the sample Web app. This should be run in the deploy env (obviously).
-# Before running this you must set the environment variables defined in deployfortestenv.sh
-
 version: '3'
 services:
-  # Ref: https://hub.docker.com/_/mysql
   arbo-db:
     build: ./db   
     image: arbo-db:1.0
     ports:
       - 3306:3306
+    command: --max_allowed_packet=325058567
     volumes:
       - ./db/schema:/docker-entrypoint-initdb.d
       - "db-data:/var/lib/mysql"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}      
     networks:
-      - inner
-    deploy:
-      mode: global
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
+      - db
 
   grafana:
     image: grafana/grafana
@@ -48,7 +38,7 @@ services:
       # - GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES=2
       - GF_INSTALL_PLUGINS=grafana-clock-panel,vonage-status-panel,flant-statusmap-panel,snuids-radar-panel,neocat-cal-heatmap-panel,briangann-gauge-panel
     networks:
-      - inner
+      - db
     ports:
       - 3000
         
@@ -59,20 +49,42 @@ services:
     depends_on:
       - arbo-db
     networks:
-      - inner
-      - outer
-    deploy:
-      mode: global
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
+      - db
+      - web
+
+  tws:
+    build: ./gateway
+    ports:
+      - "4003:4003"
+      - "5901:5900"
+    volumes:
+      - ./gateway/ib/IBController.ini:/root/IBController/IBController.ini
+      - ./gateway/ib/jts.ini:/root/Jts/jts.ini
+    environment:
+      - TZ=America/Chicago
+      # Variables pulled from /IBController/IBControllerGatewayStart.sh
+      - VNC_PASSWORD=1234 # CHANGEME
+      - TWS_MAJOR_VRSN=974
+      - IBC_INI=/root/IBController/IBController.ini
+      - IBC_PATH=/opt/IBController
+      - TWS_PATH=/root/Jts
+      - TWS_CONFIG_PATH=/root/Jts
+      - LOG_PATH=/opt/IBController/Logs
+      - JAVA_PATH=/opt/i4j_jres/1.8.0_152/bin # JRE is bundled starting with TWS 952 
+      - TRADING_MODE=paper # either paper or live
+      - TWSUSERID=vishal682 # IB account
+      - TWSPASSWORD=VishalD123 # IB account password
+      - FIXUSERID=
+      - FIXPASSWORD=
+      - APP=GATEWAY
+    networks:
+       - db
+
 
 networks:
-  outer:
+  db:
     driver: bridge
-  inner:
+  web:
     driver: bridge
     
 volumes:
